@@ -30,7 +30,7 @@ Take the trivial case of returning the square root of a number:
 // Need to do it like this to avoid premature browser compilation of Math.sqrt
 var sqrt = function (n) { return Math.sqrt(n); };
 
-// Spawn a remote RemoteReference
+// Spawn a RemoteReference
 var r = Parallel.spawn(sqrt, 100);
  
 // Fetch the remote reference and log the result when it's complete
@@ -88,7 +88,7 @@ d.fetch(function (result) {
 });
 ```
 
-What we do here is define our map and reduce functions, then send them to the `mapreduce` function along with a list of chunks. Each chunk will be the argument passed to `sqrt`. To pass multiple arguments to the mapper, make each chunk and array.
+What we do here is define our map and reduce functions, then send them to the `mapreduce` function along with a list of chunks. Each chunk will be the argument passed to `sqrt`. To pass multiple arguments to the mapper, make each chunk an array.
 
 Once we dispatch the computation, we get a `DistributedProcess` object, d. d contains references to the mapper, reducer, chunks, and the array of remote references being used.
 
@@ -113,6 +113,57 @@ var d = Parallel.mapreduce(sqrt, add, [10000, 20000, 40000, 60000, 80000]);
 // Fetch the distributed process and get the reduced value when complete
 d.fetch(yourCallback);
 ```
+
+## Parallel.require
+
+`require` is used to share state between your workers. Require can be used to import libraries and functions into your worker threads.
+
+`require` takes any number of arguments, either functions or strings. If the argument is a function it will be converted into a string and included in your worker.
+
+**Important:** If you pass functions into `require` they *must be named functions*. Anonymous functions will not work!
+
+### Example:
+
+```javascript
+var wontWork = function (n) { return n * n; };
+
+function worksGreat(n) { return n * n };
+
+Parallel.require(wontWork);
+
+var r = Parallel.spawn(function (a) { return 2 * wontWork(a); }, 3);  // throws an error
+
+Parallel.require(worksGreat);
+
+var r = Parallel.spawn(function (a) { return 2 * worksGreat(a); }, 3); // returns 18 
+```
+
+### Passing files as arguments to require
+
+`require` also accepts files as requirements. These should be passed as strings. The string may either be a url of the file you want to include or an **absolute** path.
+
+### Examples
+
+<dl>
+    <dt>Absolute url:</dt>
+    <dd>`Parallel.require('http://mydomain.com/js/script.js')`</dd>
+
+    <dt>Absolute path (assuming my document lives in http://mydomain.com/index.html)</dt>
+    <dd>`Parallel.require('js/script.js')`</dd>
+
+    <dt>Does not work (yet)</dt>
+    <dd>`Parallel.require('../js/script.js')`</dd>
+</dl>
+
+**Important:** browser security restrictions prevent loading files over the file protocol, so you will need to run an http server in order to load local files.
+
+Personally, I like the npm package, [http-server](https://github.com/nodeapps/http-server). This can be installed and run pretty easily:
+
+```
+$ npm install http-server -g
+$ cd myproject
+$ http-server .
+```   
 
 ## RemoteReference
 

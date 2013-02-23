@@ -1,99 +1,142 @@
 /*
- *	Library: parallel.js
- *	Author: Adam Savitzky
+ *  Library: parallel.js
+ *  Author: Adam Savitzky
  *  License: Creative Commons 3.0
  */
 
 var Parallel = (function  () {
 
-	var spawn = (function () {
+    var require = (function () {
+        var state = {
+            files: [],
+            funcs: []
+        };
 
-		var wrap = function (fn) {
-			return 'self.onmessage = function (e) { self.postMessage(JSON.stringify((' + fn.toString() + ').apply(self, JSON.parse(e.data)))); }';
-		};
+        var isUrl = function (test) {
+            var r = new RegExp('^(http|https|file)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*$');
+            return r.test(test);
+        }
 
-		var RemoteRef = function (fn) {
-			var str = wrap(fn),
-				blob = new Blob([str], { type: 'text/javascript' }),
-				url = URL.createObjectURL(blob),
-				worker = new Worker(url);
+        var makeUrl = function (fileName) {
+            return isUrl(fileName) ? fileName : [window.location.origin, fileName].join('/');
+        };
 
-			worker.onmessage = this.onWorkerMsg;
+        var setter = function () {
+            var args = _.toArray(arguments);
 
-			this.worker = worker;
-			this.worker.ref = this;
-		};
+            state.funcs = _.filter(args, _.isFunction);
+            state.files = _.chain(args).filter(_.isString).map(makeUrl).value();
+        };
 
-		RemoteRef.prototype.onWorkerMsg = function (e) {
-			this.ref.data = JSON.parse(e.data);
-		};
+        setter.state = state;
 
-		RemoteRef.prototype.data = undefined;
+        return setter;
+    })();
 
-		RemoteRef.prototype.fetch = function (cb) {
-			return this.data ? (cb ? cb(this.data): this.data) : (setTimeout(_.bind(this.fetch, this, cb), 0) && undefined);
-		};
+    var spawn = (function () {
 
-		RemoteRef.prototype.terminate = function () {
-			this.worker.terminate();
-		};
+        var wrapMain = function (fn) {
+            return 'self.onmessage = function (e) { self.postMessage(JSON.stringify((' + fn.toString() + ').apply(self, JSON.parse(e.data)))); };';
+        };
 
-		return function (fn, args) {
-			var r = new RemoteRef(fn);
-			r.worker.postMessage(JSON.stringify([].concat(args)));
+        var wrapFiles = function (str) {
+            return (require.state.files.length ? 'importScripts("' + require.state.files.join('","') + '");' : '') + str;
+        };
 
-			return r;
-		};
+        var wrapFunctions = function (str) {
+            return str + (require.state.funcs.length ? _.invoke(require.state.funcs, 'toString').join(';') + ';' : '');
+        };
 
-	})();
+        var wrap = _.compose(wrapFunctions, wrapFiles, wrapMain);
 
-	var mapreduce = (function () {
+        var RemoteRef = function (fn) {
+            var str = wrap(fn),
+                blob = new Blob([str], { type: 'text/javascript' }),
+                url = URL.createObjectURL(blob),
+                worker = new Worker(url);
 
-		var DistributedProcess = function (mapper, reducer, chunks) {
-			this.mapper = mapper;
-			this.reducer = reducer;
-			this.chunks = chunks;
-			this.refs = _.map(chunks, function (chunk) {
-				return spawn(mapper, [].concat(chunk));
-			});
-		};
+            worker.onmessage = this.onWorkerMsg;
 
-		DistributedProcess.prototype.fetch = function (cb) {
-			var results = this.fetchRefs(),
-				that = this;
+            this.worker = worker;
+            this.worker.ref = this;
+        };
 
-			if (_.isEqual(results, _.without(results, undefined))) {
-				return cb ? cb(_.reduce(results, this.reducer)) : _.reduce(results, this.reducer);
-			}
+        RemoteRef.prototype.onWorkerMsg = function (e) {
+            this.ref.data = JSON.parse(e.data);
+        };
 
-			setTimeout(function () {
-				that.fetch(cb);
-			}, 100);
-		};
+        RemoteRef.prototype.data = undefined;
+
+        RemoteRef.prototype.fetch = function (cb) {
+            if (this.data === '___terminated') {
+                return;
+            }
+
+            return this.data ? (cb ? cb(this.data): this.data) : (setTimeout(_.bind(this.fetch, this, cb), 0) && undefined);
+        };
+
+        RemoteRef.prototype.terminate = function () {
+            this.data = '___terminated';
+            this.worker.terminate();
+        };
+
+        return function (fn, args) {
+            var r = new RemoteRef(fn);
+            r.worker.postMessage(JSON.stringify([].concat(args)));
+
+            return r;
+        };
+
+    })();
+
+    var mapreduce = (function () {
+
+        var DistributedProcess = function (mapper, reducer, chunks) {
+            this.mapper = mapper;
+            this.reducer = reducer;
+            this.chunks = chunks;
+            this.refs = _.map(chunks, function (chunk) {
+                return spawn(mapper, [].concat(chunk));
+            });
+        };
+
+        DistributedProcess.prototype.fetch = function (cb) {
+            var results = this.fetchRefs(),
+                that = this;
+
+            if (_.isEqual(results, _.without(results, undefined))) {
+                return cb ? cb(_.reduce(results, this.reducer)) : _.reduce(results, this.reducer);
+            }
+
+            setTimeout(function () {
+                that.fetch(cb);
+            }, 100);
+        };
 
 
-		DistributedProcess.prototype.fetchRefs = function (cb) {
-			return _.map(this.refs, function (ref) {
-				return ref.fetch(cb || undefined);
-			}, this);
-		};
+        DistributedProcess.prototype.fetchRefs = function (cb) {
+            return _.map(this.refs, function (ref) {
+                return ref.fetch(cb || undefined);
+            }, this);
+        };
 
-		DistributedProcess.prototype.terminate = function (n) {
-			n !== undefined ? this.refs[n].terminate() : _.invoke(this.refs, 'terminate');
-		};
+        DistributedProcess.prototype.terminate = function (n) {
+            n !== undefined ? this.refs[n].terminate() : _.invoke(this.refs, 'terminate');
+        };
 
-		return function (mapper, reducer, chunks, cb) {
-			var d = new DistributedProcess(mapper, reducer, chunks);
+        return function (mapper, reducer, chunks, cb) {
+            var d = new DistributedProcess(mapper, reducer, chunks);
 
-			d.fetch(cb);
+            d.fetch(cb);
 
-			return d;
-		}
-	})();
+            return d;
+        }
+    })();
 
-	return {
-		mapreduce: mapreduce,
-		spawn: spawn
-	};
+        return {
+        mapreduce: mapreduce,
+        spawn: spawn,
+        require: require
+    };
 
 })();
