@@ -31,12 +31,12 @@
             <h2 class="page-header">Download</h2>
 
             <p>Unminified: <a href="https://raw.github.com/adambom/parallel.js/master/parallel.js">parallel.js</a></p>
-            <p>Minified (650 Bytes gzipped): <a href="https://raw.github.com/adambom/parallel.js/master/parallel.min.js">parallel.min.js</a></p>
+            <p>Minified (1195 Bytes gzipped): <a href="https://raw.github.com/adambom/parallel.js/master/parallel.min.js">parallel.min.js</a></p>
             <p>Source: <a href="https://github.com/adambom/parallel.js">github</a></p>
 
             <h2 class="page-header">Usage</h2>
 
-            <p>Include parallel.js in your project like so:</p>
+            <p>Include parallel.js in your web projects like so:</p>
 
 <pre class="prettyprint">
 &lt;script src="underscore.js"&gt;&lt;/script&gt;
@@ -45,6 +45,14 @@
 
             <p>This will give you access to the global variable, <code>Parallel</code>.</p>
 
+            <p>Parallel can also be included in node:</p>
+<pre class="prettyprint">
+$ npm install parallel.js
+</pre>
+
+<pre class="prettyprint">
+var Parallel = require('parallel.js');
+</pre>
             <h3 id="spawn">Parallel.spawn</h3>
 
             <p><code>spawn</code> takes a function and a list of arguments and spawns a worker thread for computing the result of your function. <code>spawn</code> takes two arguments, a function, and args, which may be any value that can be handled by <code>JSON.stringify</code>. Numbers, booleans, and objects/arrays should work. <code>spawn</code> will return a <code>RemoteReference</code>, which is essentially to a pointer to the result of your function, but on a different processor. To get the result of the computation, you can call <code>fetch</code> on the remote reference (see <a href="#remote-reference">RemoteReference</a>).</p>
@@ -263,7 +271,7 @@ $ http-server .
                 <p class="pull-right"><a href="#top">Back to top</a></p>
 
                 Made by <a target="_blank" href="http://adambom.github.com">Adam Savitzky</a>. Contact him <a href="mailto:adam.savitzky@gmail.com">adam.savitzky@gmail.com</a>.<br>
-                Code licensed under the <a target="_blank" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons License v3.0</a>.<br>
+                Code licensed under the BSD License.<br>
                 Based on <a target="_blank" href="http://twitter.github.com/bootstrap/">Bootstrap</a>. Hosted on <a target="_blank" href="http://pages.github.com/">GitHub</a>.<p></p>
             </footer>
         </div>

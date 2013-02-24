@@ -18,6 +18,17 @@ Include parallel.js in your project like so:
 
 This will give you access to the global variable, `Parallel`.
 
+
+Parallel can also be included in node:
+
+```
+$ npm install parallel.js
+```
+
+```javascript
+var Parallel = require('parallel.js');
+```
+
 ## Parallel.spawn
 
 `spawn` takes a function and a list of arguments and spawns a worker thread for computing the result of your function. `spawn` takes two arguments, a function, and args, which may be any value that can be handled by JSON.stringify. Numbers, booleans, and objects/arrays should work. spawn will return a `RemoteReference`, which is essentially to a pointer to the result of your function, but on a different processor. To get the result of the computation, you can call fetch on the remote reference.
@@ -187,3 +198,7 @@ Methods and properties of DistributedProcess:
 - fetchRefs: Fetches each remote reference individually and returns an array of the results. Optionally pass a callback that will be sent to the remote reference's fetch method.
 - terminate: Terminate the worker specifed by optional argument, n. n must be an integer. If n is not passed, all workers will be terminated.
 - onWorkerMsg: An internal function that gets called when the process is complete. May be overloaded for custom behavior.
+
+## License
+
+BSD

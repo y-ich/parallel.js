@@ -3,10 +3,15 @@
  *  Author: Adam Savitzky
  *  License: Creative Commons 3.0
  */
+(function (isNode, _) {
+
+var Worker = isNode ? require('./worker') : window.Worker,
+    URL = isNode ? require('./url') : window.URL,
+    Blob =  isNode ? require('./blob') : window.Blob;
 
 var Parallel = (function  () {
 
-    var require = (function () {
+    var _require = (function () {
         var state = {
             files: [],
             funcs: []
@@ -36,15 +41,21 @@ var Parallel = (function  () {
     var spawn = (function () {
 
         var wrapMain = function (fn) {
-            return 'self.onmessage = function (e) { self.postMessage(JSON.stringify((' + fn.toString() + ').apply(self, JSON.parse(e.data)))); };';
+            var op = fn.toString();
+
+            return isNode ?
+                'process.on("message", function (m) { process.send({ data : JSON.stringify((' + op + ').apply(process, JSON.parse(m))) }); });' :
+                'self.onmessage = function (e) { self.postMessage(JSON.stringify((' + op + ').apply(self, JSON.parse(e.data)))); };';
         };
 
         var wrapFiles = function (str) {
-            return (require.state.files.length ? 'importScripts("' + require.state.files.join('","') + '");' : '') + str;
+            return isNode ?
+                (_require.state.files.length ? _.map(_require.state.files, function (f) { return 'require(' + f + ');'; }).join('') : '') + str :
+                (_require.state.files.length ? 'importScripts("' + _require.state.files.join('","') + '");' : '') + str;
         };
 
         var wrapFunctions = function (str) {
-            return str + (require.state.funcs.length ? _.invoke(require.state.funcs, 'toString').join(';') + ';' : '');
+            return str + (_require.state.funcs.length ? _.invoke(_require.state.funcs, 'toString').join(';') + ';' : '');
         };
 
         var wrap = _.compose(wrapFunctions, wrapFiles, wrapMain);
@@ -55,7 +66,7 @@ var Parallel = (function  () {
                 url = URL.createObjectURL(blob),
                 worker = new Worker(url);
 
-            worker.onmessage = this.onWorkerMsg;
+            worker.onmessage = _.bind(this.onWorkerMsg, worker);
 
             this.worker = worker;
             this.worker.ref = this;
@@ -63,6 +74,10 @@ var Parallel = (function  () {
 
         RemoteRef.prototype.onWorkerMsg = function (e) {
             this.ref.data = JSON.parse(e.data);
+
+            if (isNode) {
+                this.ref.worker.terminate();
+            }
         };
 
         RemoteRef.prototype.data = undefined;
@@ -133,10 +148,20 @@ var Parallel = (function  () {
         }
     })();
 
-        return {
+    return {
         mapreduce: mapreduce,
         spawn: spawn,
-        require: require
+        require: _require
     };
 
 })();
+
+if (isNode) {
+    this.exports = Parallel;
+} else {
+    this.Parallel = Parallel;
+}
+
+}).call(typeof module !== 'undefined' && module.exports ? module : window, // context
+        typeof module !== 'undefined' && module.exports, // isNode
+        typeof module !== 'undefined' && module.exports ? require('underscore') : _); // underscore 
