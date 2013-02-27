@@ -151,11 +151,12 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
       DistributedProcess = (function() {
 
         function DistributedProcess(mapper, reducer, chunks) {
+          var _this = this;
           this.mapper = mapper;
           this.reducer = reducer;
           this.chunks = chunks;
           this.refs = this.chunks.map(function(chunk) {
-            return spawn(mapper, [].concat(chunk));
+            return spawn(_this.mapper, [].concat(chunk));
           });
         }
 
@@ -163,8 +164,8 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
           var results,
             _this = this;
           results = this.fetchRefs();
-          if (!results.some(function(e) {
-            return e === undefined;
+          if (results.every(function(e) {
+            return typeof e !== 'undefined';
           })) {
             if (cb != null) {
               return cb(results.reduce(this.reducer));
@@ -172,9 +173,10 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
               return results.reduce(this.reducer);
             }
           }
-          return setTimeout((function() {
+          setTimeout((function() {
             return _this.fetch(cb);
           }), 100);
+          return null;
         };
 
         DistributedProcess.prototype.fetchRefs = function(cb) {

@@ -88,16 +88,17 @@
         )()
         mapreduce = (->
             class DistributedProcess
-                constructor: (@mapper, @reducer, @chunks) -> @refs = @chunks.map (chunk) -> spawn mapper, [].concat chunk
+                constructor: (@mapper, @reducer, @chunks) -> @refs = @chunks.map (chunk) => spawn @mapper, [].concat chunk
 
                 fetch: (cb) ->
                     results = @fetchRefs()
-                    if not results.some((e) -> e is `undefined`)
+                    if results.every((e) -> typeof e isnt 'undefined')
                         return if cb?
                                 cb results.reduce @reducer
                             else
                                 results.reduce @reducer
                     setTimeout (=> @fetch cb), 100
+                    null
 
                 fetchRefs: (cb) -> @refs.map (ref) -> ref.fetch cb or `undefined`
 
