@@ -6,6 +6,8 @@
 #    License: Creative Commons 3.0
 */
 
+var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
 (function(isNode) {
   var Blob, Parallel, URL, Worker;
   Worker = isNode ? require('./worker') : window.Worker;
@@ -79,8 +81,9 @@
       RemoteRef = (function() {
 
         function RemoteRef(fn, args) {
-          var blob, str, url, worker,
-            _this = this;
+          this.onWorkerMsg = __bind(this.onWorkerMsg, this);
+
+          var blob, str, url, worker;
           try {
             str = wrap(fn);
             blob = new Blob([str], {
@@ -88,9 +91,7 @@
             });
             url = URL.createObjectURL(blob);
             worker = new Worker(url);
-            worker.onmessage = function() {
-              return _this.onWorkerMsg;
-            };
+            worker.onmessage = this.onWorkerMsg;
             this.worker = worker;
             this.worker.ref = this;
             this.worker.postMessage(isNode ? JSON.stringify([].concat(args)) : [].concat(args));
@@ -105,7 +106,6 @@
         }
 
         RemoteRef.prototype.onWorkerMsg = function(e) {
-          console.log(e);
           if (isNode) {
             this.data = JSON.parse(e.data);
             return this.worker.terminate();
@@ -118,7 +118,6 @@
 
         RemoteRef.prototype.fetch = function(cb) {
           var _this = this;
-          console.log(cb);
           if (this.data === '___terminated') {
             return;
           }

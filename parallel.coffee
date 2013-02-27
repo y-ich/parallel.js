@@ -54,7 +54,7 @@
                         blob = new Blob [str], type: 'text/javascript'
                         url = URL.createObjectURL blob
                         worker = new Worker url
-                        worker.onmessage = => @onWorkerMsg
+                        worker.onmessage = @onWorkerMsg
                         @worker = worker
                         @worker.ref = this
                         @worker.postMessage if isNode
@@ -65,7 +65,7 @@
                         console.error e if console? and console.error?
                         @onWorkerMsg data: fn.apply(window, [].concat args)
 
-                onWorkerMsg: (e) ->
+                onWorkerMsg: (e) =>
                     if isNode
                         @data = JSON.parse e.data
                         @worker.terminate()
