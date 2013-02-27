@@ -83,7 +83,6 @@
             _this = this;
           try {
             str = wrap(fn);
-            console.log(str);
             blob = new Blob([str], {
               type: 'text/javascript'
             });
@@ -94,22 +93,19 @@
             };
             this.worker = worker;
             this.worker.ref = this;
-            if (isNode) {
-              this.worker.postMessage(JSON.stringify([].concat(args)));
-            } else {
-              this.worker.postMessage([].concat(args));
-            }
+            this.worker.postMessage(isNode ? JSON.stringify([].concat(args)) : [].concat(args));
           } catch (e) {
             if ((typeof console !== "undefined" && console !== null) && (console.error != null)) {
               console.error(e);
             }
             this.onWorkerMsg({
-              data: fn.apply(window, args)
+              data: fn.apply(window, [].concat(args))
             });
           }
         }
 
         RemoteRef.prototype.onWorkerMsg = function(e) {
+          console.log(e);
           if (isNode) {
             this.data = JSON.parse(e.data);
             return this.worker.terminate();
@@ -122,11 +118,12 @@
 
         RemoteRef.prototype.fetch = function(cb) {
           var _this = this;
+          console.log(cb);
           if (this.data === '___terminated') {
             return;
           }
           if (this.data) {
-            if (cb) {
+            if (cb != null) {
               return cb(this.data);
             } else {
               return this.data;
@@ -182,7 +179,6 @@
         };
 
         DistributedProcess.prototype.fetchRefs = function(cb) {
-          var _this = this;
           return this.refs.map(function(ref) {
             return ref.fetch(cb || undefined);
           });

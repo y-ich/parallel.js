@@ -51,20 +51,19 @@
                 constructor: (fn, args) ->
                     try
                         str = wrap fn
-                        console.log str
                         blob = new Blob [str], type: 'text/javascript'
                         url = URL.createObjectURL blob
                         worker = new Worker url
                         worker.onmessage = => @onWorkerMsg
                         @worker = worker
                         @worker.ref = this
-                        if isNode
-                            @worker.postMessage JSON.stringify [].concat args
-                        else
-                            @worker.postMessage [].concat args
+                        @worker.postMessage if isNode
+                                JSON.stringify [].concat args
+                            else
+                                [].concat args
                     catch e
                         console.error e if console? and console.error?
-                        @onWorkerMsg data: fn.apply window, args
+                        @onWorkerMsg data: fn.apply(window, [].concat args)
 
                 onWorkerMsg: (e) ->
                     if isNode
@@ -77,7 +76,7 @@
                 fetch: (cb) ->
                     return if @data is '___terminated'
                     if @data
-                        if cb then cb @data else @data
+                        if cb? then cb @data else @data
                     else
                         setTimeout((=> @fetch cb), 0) and `undefined`
 
@@ -100,7 +99,7 @@
                                 results.reduce @reducer
                     setTimeout (=> @fetch cb), 100
 
-                fetchRefs: (cb) -> @refs.map (ref) => ref.fetch cb or `undefined`
+                fetchRefs: (cb) -> @refs.map (ref) -> ref.fetch cb or `undefined`
 
                 terminate: (n) ->
                     if n isnt `undefined`
