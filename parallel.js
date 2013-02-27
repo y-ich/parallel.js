@@ -10,9 +10,9 @@
 var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 (function(isNode) {
-  var Blob, Parallel, URL, Worker;
+  var Blob, Parallel, URL, Worker, _ref;
   Worker = isNode ? require('./worker') : window.Worker;
-  URL = isNode ? require('./url') : window.URL;
+  URL = isNode ? require('./url') : (_ref = window.URL) != null ? _ref : window.webkitURL;
   Blob = isNode ? require('./blob') : window.Blob;
   Parallel = (function() {
     var mapreduce, spawn, _require;

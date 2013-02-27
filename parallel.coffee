@@ -7,7 +7,7 @@
 ### 
 ((isNode) -> # context
     Worker = if isNode then require './worker' else window.Worker
-    URL = if isNode then require './url' else window.URL
+    URL = if isNode then require './url' else window.URL ? window.webkitURL
     Blob = if isNode then require './blob' else window.Blob
     Parallel = (->
         _require = (->
