@@ -1,7 +1,8 @@
 ###
 #    Library: parallel.coffee
 #    Author: Adam Savitzky
-#    Translater: js2coffee + ICHIKAWA, Yuji
+#    Translater: js2coffee
+#    Modifier: ICHIKAWA, Yuji
 #    License: Creative Commons 3.0
 ### 
 ((isNode) -> # context

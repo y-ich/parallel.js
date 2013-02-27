@@ -8,6 +8,7 @@ Parallel.js は、 Javascript でマルチコア処理のための小さなラ�
 
 Parallel.js によって、 web workers を利用した高度なマルチコア処理を提供することでこれらの問題を解決出来ます。(web workers をサポートしてさえいれば) お使いのブラウザでも動作します！お試しください。
 
+オリジナルのparallel.jsはAdam Savitzkyによって書かれ保守されています。このバージョンはCoffeeScriptで書き直され、Underscore.jsへの依存性をなくしたものです。
 # Usage
 
 プロジェクト内に次のようにして parallel.js を含めてください。
