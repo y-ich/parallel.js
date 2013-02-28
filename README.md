@@ -7,7 +7,7 @@ Parallel.js is a tiny library for multi-core processing in Javascript. It was cr
 
 Parallel.js solves that problem by giving you high level access to multicore processing using web workers. It runs in your browser (as long as it supports web workers). Check it out.
 
-Original parallel.js was written and is maintained by Adam Savitzky. This version of parallel.js was re-written in CoffeeScript, and has no dependency on underscore.js.
+Original parallel.js was written and is maintained by Adam Savitzky. **This fork of parallel.js was re-written in CoffeeScript, and has no dependency on underscore.js.**
 
 # Usage
 
