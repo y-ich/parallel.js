@@ -21,7 +21,7 @@
 
             makeUrl = (fileName) -> if isUrl fileName then fileName else [window.location.origin, fileName].join '/'
 
-            setter = ->
+            setter = () ->
                 args = (e for e in arguments)
                 state.funcs = args.filter (e) -> typeof e is 'function'
                 state.files = args.filter((e) -> typeof e is 'string').map makeUrl
@@ -122,5 +122,4 @@
         @exports = Parallel
     else
         @Parallel = Parallel
-# isNode
-).call if typeof module isnt "undefined" and module.exports then module else window
+).call (if module?.exports? then module else window), module?.module.exports?

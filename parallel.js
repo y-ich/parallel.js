@@ -217,4 +217,4 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
   } else {
     return this.Parallel = Parallel;
   }
-}).call(typeof module !== "undefined" && module.exports ? module : window);
+}).call(((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null ? module : window), (typeof module !== "undefined" && module !== null ? module.module.exports : void 0) != null);
