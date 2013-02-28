@@ -61,7 +61,7 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
         var op;
         op = fn.toString();
         if (isNode) {
-          return "process.on(\"message\", function (m) { process.send({ data : JSON.stringify((" + op + ").apply(process, JSON.parse(m))) }); });";
+          return "process.on('message', function (m) { process.send({ data : JSON.stringify((" + op + ").apply(process, JSON.parse(m))) }); });";
         } else {
           return "self.onmessage = function (e) { self.postMessage((" + op + ").apply(self, e.data)); };";
         }
@@ -97,7 +97,7 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
             this.worker.ref = this;
             this.worker.postMessage(isNode ? JSON.stringify([].concat(args)) : [].concat(args));
           } catch (e) {
-            if ((typeof console !== "undefined" && console !== null) && (console.error != null)) {
+            if ((typeof console !== "undefined" && console !== null ? console.error : void 0) != null) {
               console.error(e);
             }
             this.onWorkerMsg({
@@ -187,7 +187,7 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
         };
 
         DistributedProcess.prototype.terminate = function(n) {
-          if (n !== undefined) {
+          if (n != null) {
             return this.refs[n].terminate();
           } else {
             return this.refs.map(function(e) {

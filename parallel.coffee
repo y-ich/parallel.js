@@ -19,7 +19,11 @@
                 r = new RegExp "^(http|https|file)://[a-zA-Z0-9-.]+.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9-._?,'/\\+&amp;%$#=~])*$"
                 r.test test
 
-            makeUrl = (fileName) -> if isUrl fileName then fileName else [window.location.origin, fileName].join '/'
+            makeUrl = (fileName) ->
+                if isUrl fileName
+                    fileName
+                else
+                    [window.location.origin, fileName].join '/'
 
             setter = () ->
                 args = (e for e in arguments)
@@ -29,11 +33,12 @@
             setter.state = state
             setter
         )()
+
         spawn = (->
             wrapMain = (fn) ->
                 op = fn.toString()
                 if isNode
-                    "process.on(\"message\", function (m) { process.send({ data : JSON.stringify((#{op}).apply(process, JSON.parse(m))) }); });"
+                    "process.on('message', function (m) { process.send({ data : JSON.stringify((#{op}).apply(process, JSON.parse(m))) }); });"
                 else
                     "self.onmessage = function (e) { self.postMessage((#{op}).apply(self, e.data)); };"
 
@@ -42,12 +47,17 @@
                     _require.state.files.map((f) -> "require(#{f});").join ''
                 else if _require.state.files.length
                         'importScripts("' + _require.state.files.join('","') + '");'
-                else '') + str
+                else
+                    '') + str
 
             wrapFunctions = (str) ->
-                str + if _require.state.funcs.length then _require.state.funcs.map((e) -> e.toString()).join(';') + ';' else ''
+                str + if _require.state.funcs.length
+                        _require.state.funcs.map((e) -> e.toString()).join(';') + ';'
+                    else
+                        ''
 
             wrap = (fn) -> wrapFunctions wrapFiles wrapMain fn
+
             class RemoteRef
                 constructor: (fn, args) ->
                     try
@@ -63,7 +73,7 @@
                             else
                                 [].concat args
                     catch e
-                        console.error e if console? and console.error?
+                        console.error e if console?.error?
                         @onWorkerMsg data: fn.apply(window, [].concat args)
 
                 onWorkerMsg: (e) =>
@@ -74,8 +84,10 @@
                         @data = e.data
 
                 data: `undefined`
+                
                 fetch: (cb) ->
                     return if @data is '___terminated'
+
                     if @data
                         if cb? then cb @data else @data
                     else
@@ -101,10 +113,10 @@
                     setTimeout (=> @fetch cb), 100
                     null
 
-                fetchRefs: (cb) -> @refs.map (ref) -> ref.fetch cb or `undefined`
+                fetchRefs: (cb) -> @refs.map (ref) -> ref.fetch(cb or `undefined`)
 
                 terminate: (n) ->
-                    if n isnt `undefined`
+                    if n?
                         @refs[n].terminate()
                     else
                         @refs.map (e) -> e.terminate()
